@@ -9,14 +9,13 @@
         <version>0.0.1-SNAPSHOT</version>
     </parent>
 
-    <artifactId>stat</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <artifactId>infra</artifactId>
     <packaging>pom</packaging>
 
     <modules>
-        <module>stat-client</module>
-        <module>stat-dto</module>
-        <module>stat-server</module>
+        <module>config-server</module>
+        <module>discovery-server</module>
+        <module>gateway-server</module>
     </modules>
 
     <dependencyManagement>
@@ -30,4 +29,5 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
+
 </project>
