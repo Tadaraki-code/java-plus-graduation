@@ -20,7 +20,7 @@ spring:
     url: "jdbc:postgresql://localhost:6543/ewm-main"
 
 stat-service:
-  stat-server-id: "stat-server"
+  stat-server-id: "stats-server"
 
 management:
   endpoints:
