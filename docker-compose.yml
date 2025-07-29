@@ -44,4 +44,6 @@ services:
     environment:
       - POSTGRES_PASSWORD=service
       - POSTGRES_USER=service
-      - POSTGRES_DB=ewm-main
+      - POSTGRES_DB=user_service
+    volumes:
+      - ./docker-init/init-multiple-dbs.sql:/docker-entrypoint-initdb.d/init.sql:ro

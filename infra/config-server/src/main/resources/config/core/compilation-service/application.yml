@@ -1,0 +1,51 @@
+application:
+  date-time-format: yyyy-MM-dd HH:mm:ss
+
+spring:
+  main:
+    banner-mode: OFF
+  jpa:
+    hibernate:
+      ddl-auto: update
+      format_sql: true
+      jdbc:
+        time_zone: UTC
+  sql:
+    init:
+      mode: always
+  datasource:
+    driverClassName: "org.postgresql.Driver"
+    username: "service"
+    password: "service"
+    url: "jdbc:postgresql://localhost:6543/compilation_service"
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+
+logging:
+  level:
+    org.springframework:
+      orm.jpa: WARN
+      orm.jpa.JpaTransactionManager: WARN
+      transaction: WARN
+      transaction.interceptor: WARN
+      web: DEBUG
+      http.converter: TRACE
+      cloud.openfeign: DEBUG
+      cloud.loadbalancer: DEBUG
+      web.client.RestTemplate: DEBUG
+      aop: DEBUG
+      context.annotation: DEBUG
+    feign:
+      Logger: DEBUG
+      Client: DEBUG
+      Retryer: DEBUG
+      Request: DEBUG
+      Response: DEBUG
+    com.netflix.discovery: DEBUG
+
+server:
+  port: 0
