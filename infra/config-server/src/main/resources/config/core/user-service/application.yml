@@ -27,25 +27,12 @@ management:
 
 logging:
   level:
+    root: INFO
     org.springframework:
       orm.jpa: WARN
-      orm.jpa.JpaTransactionManager: WARN
       transaction: WARN
-      transaction.interceptor: WARN
-      web: DEBUG
-      http.converter: TRACE
-      cloud.openfeign: DEBUG
-      cloud.loadbalancer: DEBUG
-      web.client.RestTemplate: DEBUG
-      aop: DEBUG
-      context.annotation: DEBUG
-    feign:
-      Logger: DEBUG
-      Client: DEBUG
-      Retryer: DEBUG
-      Request: DEBUG
-      Response: DEBUG
-    com.netflix.discovery: DEBUG
+    feign: WARN
+    com.netflix.discovery: WARN
 
 server:
   port: 0

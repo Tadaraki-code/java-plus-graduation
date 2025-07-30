@@ -472,9 +472,11 @@ public class EventsServiceImpl implements EventsService {
         if (eventIds == null || eventIds.isEmpty()) {
             return new HashMap<>();
         }
-        System.out.println("Запрос в реквесты");
-        System.out.println(eventIds);
-        return requestClient.getConfirmedRequestsCount(eventIds);
+        try {
+            return requestClient.getConfirmedRequestsCount(eventIds);
+        } catch (ClientApiException e) {
+            throw new ServiceUnavailableException("Request service is temporarily unavailable, please try again later");
+        }
     }
 
     private List<Long> getAvailableEventIdsByParticipantLimit() {

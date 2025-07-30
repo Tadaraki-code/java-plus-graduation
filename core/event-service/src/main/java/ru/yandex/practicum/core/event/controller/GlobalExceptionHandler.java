@@ -170,6 +170,20 @@ public class GlobalExceptionHandler {
                 .build();
     }
 
+    @ExceptionHandler(ServiceUnavailableException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiError handleServiceUnavailableException(final ServiceUnavailableException e) {
+        log.warn("400 {}", e.getMessage(), e);
+
+        return ApiError.builder()
+                .message("BAD_REQUEST")
+                .reason(e.getMessage())
+                .status(HttpStatus.BAD_REQUEST.toString())
+                .errors(List.of(e.getMessage()))
+                .timestamp(LocalDateTime.now())
+                .build();
+    }
+
     @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ApiError handleAnyException(final Exception e) {
