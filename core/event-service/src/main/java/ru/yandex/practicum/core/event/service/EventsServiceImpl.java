@@ -531,7 +531,13 @@ public class EventsServiceImpl implements EventsService {
         long id = event.getId();
         Map<Long, Long> eventsViewsMap = eventsViewsGetter.getEventsViewsMap(List.of(id));
         Map<Long, Long> confirmedRequestsMap = getConfirmedRequestsMap(List.of(id));
-        List<CommentShortDto> comments = commentClient.findFirstCommentsForEvent(id, 5L);
+        List<CommentShortDto> comments;
+
+        try {
+          comments = commentClient.findFirstCommentsForEvent(id, 5L);
+        } catch (ClientApiException e) {
+            comments = new ArrayList<>();
+        }
 
         MappingEventParameters eventFullDtoParams = MappingEventParameters.builder()
                 .event(event)
