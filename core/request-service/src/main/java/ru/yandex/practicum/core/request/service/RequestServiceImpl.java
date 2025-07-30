@@ -5,8 +5,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.core.interaction.clients.EventClient;
 import ru.yandex.practicum.core.interaction.clients.UserClient;
-import ru.yandex.practicum.core.interaction.error.exception.*;
-import ru.yandex.practicum.core.interaction.error.exception.IllegalArgumentException;
+import ru.yandex.practicum.core.interaction.error.exception.ClientApiException;
+import ru.yandex.practicum.core.interaction.error.exception.NotFoundException;
 import ru.yandex.practicum.core.interaction.event.dto.EventFullDto;
 import ru.yandex.practicum.core.interaction.request.dto.ParticipationRequestDto;
 import ru.yandex.practicum.core.interaction.request.enums.RequestStatus;
@@ -41,10 +41,6 @@ public class RequestServiceImpl implements RequestService {
     @Transactional
     public ParticipationRequestDto createUserRequest(Long userId, Long eventId) {
 
-        if (userId == null || eventId == null) {
-            throw new IllegalArgumentException("UserId and EventId cannot be null");
-        }
-
         EventFullDto event = getEventById(eventId);
         UserDto requester = getUserById(userId);
 
@@ -52,7 +48,7 @@ public class RequestServiceImpl implements RequestService {
                 ? RequestStatus.CONFIRMED
                 : RequestStatus.PENDING;
 
-        RequestValidator validator = new RequestValidator(event, userId, requestRepository);
+        RequestValidator validator = new RequestValidator(event, userId, eventId, requestRepository);
         validator.validate();
 
         Request newRequest = Request.builder()
@@ -61,15 +57,7 @@ public class RequestServiceImpl implements RequestService {
                 .requesterId(requester.getId())
                 .status(status)
                 .build();
-
-        try {
-            Request savedRequest = requestRepository.save(newRequest);
-            return RequestMapper.toRequestDto(savedRequest);
-        } catch (DataIntegrityViolationException e) {
-            throw new DataIntegrityViolationException(String.format("Request already exists for " +
-                    "user %d and event %d", userId, eventId));
-        }
-
+        return RequestMapper.toRequestDto(requestRepository.save(newRequest));
     }
 
     @Override
@@ -157,4 +145,6 @@ public class RequestServiceImpl implements RequestService {
             throw new NotFoundException(String.format("User not found with id %d", userId));
         }
     }
+
+
 }

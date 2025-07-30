@@ -128,8 +128,7 @@ public class EventsServiceImpl implements EventsService {
         Long eventId = updateParams.getEventId();
         EventRequestStatusUpdateRequest statusUpdateRequest = updateParams.getEventRequestStatusUpdateRequest();
 
-        Event event = eventsRepository.findByIdForUpdate(eventId)
-                .orElseThrow(() -> new NotFoundException(String.format("Event id=%d not found.", eventId)));
+        Event event = getEventWithCheck(eventId);
         checkUserRights(userId, event);
 
         EventRequestStatusUpdateResult result = EventRequestStatusUpdateResult.builder()
@@ -473,6 +472,8 @@ public class EventsServiceImpl implements EventsService {
         if (eventIds == null || eventIds.isEmpty()) {
             return new HashMap<>();
         }
+        System.out.println("Запрос в реквесты");
+        System.out.println(eventIds);
         return requestClient.getConfirmedRequestsCount(eventIds);
     }
 
@@ -483,6 +484,8 @@ public class EventsServiceImpl implements EventsService {
         }
 
         List<Long> eventIds = events.stream().map(Event::getId).toList();
+        System.out.println("В методе getAvailableEventIdsByParticipantLimit");
+        System.out.println(eventIds);
         Map<Long, Long> confirmedRequestsMap = requestClient.getConfirmedRequestsCount(eventIds);
         System.out.println(confirmedRequestsMap);
 

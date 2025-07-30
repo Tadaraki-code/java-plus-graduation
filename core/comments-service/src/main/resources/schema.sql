@@ -7,6 +7,5 @@ CREATE TABLE IF NOT EXISTS comments (
    created_on TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
    event_id BIGINT NOT NULL,
    author_id BIGINT NOT NULL,
-   author_name VARCHAR(255) NOT NULL CHECK (length(text) >= 5 AND length(text) <= 255),
-   CONSTRAINT uk_author_event UNIQUE (author_id, event_id)
+   author_name VARCHAR(255) NOT NULL CHECK (length(text) >= 5 AND length(text) <= 255)
 );

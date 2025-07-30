@@ -15,13 +15,13 @@ public class RequestValidator {
 
     EventFullDto event;
     Long userId;
-//    Long eventId;
+    Long eventId;
     RequestRepository requestRepository;
 
     public void validate() {
         validateInitiator();
         validateParticipantLimit();
-//        validateExistingRequest();
+        validateExistingRequest();
         validateEventState();
     }
 
@@ -38,11 +38,11 @@ public class RequestValidator {
         }
     }
 
-//    private void validateExistingRequest() {
-//        if (requestRepository.existsByRequesterIdAndEventId(userId, eventId)) {
-//            throw new DataIntegrityViolationException("You have already created a request for this event");
-//        }
-//    }
+    private void validateExistingRequest() {
+        if (requestRepository.existsByRequesterIdAndEventId(userId, eventId)) {
+            throw new DataIntegrityViolationException("You have already created a request for this event");
+        }
+    }
 
     private void validateEventState() {
         if (!event.getState().equals(EventPublishState.PUBLISHED)) {

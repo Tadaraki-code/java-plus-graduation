@@ -3,6 +3,5 @@ CREATE TABLE IF NOT EXISTS requests (
     created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     event_id BIGINT NOT NULL,
     requester_id BIGINT NOT NULL,
-    status VARCHAR(50) NOT NULL,
-    CONSTRAINT uk_requester_event UNIQUE (requester_id, event_id)
+    status VARCHAR(50) NOT NULL
 );
