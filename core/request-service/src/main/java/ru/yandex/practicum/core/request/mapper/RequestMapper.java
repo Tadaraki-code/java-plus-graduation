@@ -3,12 +3,23 @@ package ru.yandex.practicum.core.request.mapper;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.core.interaction.request.dto.ParticipationRequestDto;
 import ru.yandex.practicum.core.interaction.request.enums.RequestStatus;
+import ru.yandex.practicum.core.interaction.util.Util;
 import ru.yandex.practicum.core.request.model.Request;
 
 import java.time.LocalDateTime;
 
 @Component
 public class RequestMapper {
+
+    public static Request toNewRequestEntity(Long eventId, Long requestId, RequestStatus status) {
+
+        return  Request.builder()
+                .created(Util.getNowTruncatedToSeconds())
+                .eventId(eventId)
+                .requesterId(requestId)
+                .status(status)
+                .build();
+    }
 
     public static ParticipationRequestDto toRequestDto(Request request) {
 

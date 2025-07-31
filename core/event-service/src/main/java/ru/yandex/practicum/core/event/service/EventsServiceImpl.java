@@ -519,13 +519,11 @@ public class EventsServiceImpl implements EventsService {
         Map<Long, Long> eventsViewsMap = eventsViewsGetter.getEventsViewsMap(List.of(id));
         Map<Long, Long> confirmedRequestsMap = getConfirmedRequestsMap(List.of(id));
 
-        MappingEventParameters eventFullDtoParams = MappingEventParameters.builder()
-                .event(event)
-                .categoryDto(getCategoryWithCheck(event.getCategoryId()))
-                .initiator(getUserShorDto(event.getInitiatorId()))
-                .confirmedRequests(confirmedRequestsMap.getOrDefault(id, 0L))
-                .views(eventsViewsMap.get(id))
-                .build();
+        MappingEventParameters eventFullDtoParams = EventMapper.createMappingEventParameter(event,
+                getCategoryWithCheck(event.getCategoryId()),
+                getUserShorDto(event.getInitiatorId()),
+                eventsViewsMap.getOrDefault(id, 0L),
+                confirmedRequestsMap.getOrDefault(id, 0L));
         return EventMapper.toEventFullDto(eventFullDtoParams);
     }
 
@@ -541,25 +539,22 @@ public class EventsServiceImpl implements EventsService {
             comments = new ArrayList<>();
         }
 
-        MappingEventParameters eventFullDtoParams = MappingEventParameters.builder()
-                .event(event)
-                .categoryDto(getCategoryWithCheck(event.getCategoryId()))
-                .initiator(getUserShorDto(event.getInitiatorId()))
-                .confirmedRequests(confirmedRequestsMap.getOrDefault(id, 0L))
-                .views(eventsViewsMap.get(id))
-                .comments(comments)
-                .build();
+        MappingEventParameters eventFullDtoParams = EventMapper.createMappingEventParameterWithComments(event,
+                getCategoryWithCheck(event.getCategoryId()),
+                getUserShorDto(event.getInitiatorId()),
+                eventsViewsMap.getOrDefault(id, 0L),
+                confirmedRequestsMap.getOrDefault(id, 0L),
+                comments);
         return EventMapper.toEventEventFullDtoWithComments(eventFullDtoParams);
     }
 
     private EventFullDto createEventFullDto(Event event, long views, long confirmedRequests) {
-        MappingEventParameters eventFullDtoParams = MappingEventParameters.builder()
-                .event(event)
-                .categoryDto(getCategoryWithCheck(event.getCategoryId()))
-                .initiator(getUserShorDto(event.getInitiatorId()))
-                .confirmedRequests(confirmedRequests)
-                .views(views)
-                .build();
+
+        MappingEventParameters eventFullDtoParams = EventMapper.createMappingEventParameter(event,
+                getCategoryWithCheck(event.getCategoryId()),
+                getUserShorDto(event.getInitiatorId()),
+                views,
+                confirmedRequests);
         return EventMapper.toEventFullDto(eventFullDtoParams);
     }
 
@@ -572,13 +567,11 @@ public class EventsServiceImpl implements EventsService {
 
         return events.stream()
                 .map(event -> {
-                    MappingEventParameters eventFullDtoParams = MappingEventParameters.builder()
-                            .event(event)
-                            .categoryDto(getCategoryWithCheck(event.getCategoryId()))
-                            .initiator(getUserShorDto(event.getInitiatorId()))
-                            .confirmedRequests(confirmedRequestsMap.getOrDefault(event.getId(), 0L))
-                            .views(eventsViewsMap.get(event.getId()))
-                            .build();
+                    MappingEventParameters eventFullDtoParams = EventMapper.createMappingEventParameter(event,
+                            getCategoryWithCheck(event.getCategoryId()),
+                            getUserShorDto(event.getInitiatorId()),
+                            eventsViewsMap.getOrDefault(event.getId(), 0L),
+                            confirmedRequestsMap.getOrDefault(event.getId(), 0L));
                     return EventMapper.toEventFullDto(eventFullDtoParams);
                 })
                 .toList();
@@ -593,14 +586,11 @@ public class EventsServiceImpl implements EventsService {
 
         return events.stream()
                 .map(event -> {
-                    MappingEventParameters mappingEventParameters = MappingEventParameters.builder()
-                            .event(event)
-                            .categoryDto(getCategoryWithCheck(event.getCategoryId()))
-                            .initiator(getUserShorDto(event.getInitiatorId()))
-                            .confirmedRequests(confirmedRequestsMap.getOrDefault(event.getId(), 0L))
-                            .views(eventsViewsMap.get(event.getId()))
-                            .build();
-
+                    MappingEventParameters mappingEventParameters = EventMapper.createMappingEventParameter(event,
+                            getCategoryWithCheck(event.getCategoryId()),
+                            getUserShorDto(event.getInitiatorId()),
+                            eventsViewsMap.getOrDefault(event.getId(), 0L),
+                            confirmedRequestsMap.getOrDefault(event.getId(), 0L));
                     return EventMapper.toEventShortDto(mappingEventParameters);
                 })
                 .toList();

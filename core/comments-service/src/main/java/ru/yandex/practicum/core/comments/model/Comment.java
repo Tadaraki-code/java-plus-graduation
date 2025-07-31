@@ -9,8 +9,9 @@ import ru.yandex.practicum.core.interaction.comments.enums.CommentStatus;
 
 import java.time.LocalDateTime;
 
-@Data
 @Entity
+@Getter
+@Setter
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor

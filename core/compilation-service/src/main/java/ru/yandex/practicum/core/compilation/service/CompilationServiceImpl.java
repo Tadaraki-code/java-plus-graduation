@@ -16,6 +16,7 @@ import ru.yandex.practicum.core.interaction.compilation.dto.CompilationParams;
 import ru.yandex.practicum.core.interaction.compilation.dto.NewCompilationDto;
 import ru.yandex.practicum.core.interaction.error.exception.ClientApiException;
 import ru.yandex.practicum.core.interaction.error.exception.NotFoundException;
+import ru.yandex.practicum.core.interaction.error.exception.ServiceUnavailableException;
 import ru.yandex.practicum.core.interaction.error.exception.ValidationException;
 import ru.yandex.practicum.core.interaction.event.dto.EventShortDto;
 
@@ -81,7 +82,9 @@ public class CompilationServiceImpl implements CompilationService {
                 throw new NotFoundException("Not all received events were found");
             }
         } catch (ClientApiException e) {
-            throw e;
+            log.info("An error occurred when creating the compilation {}," +
+                    " the event service is temporarily unavailable.", newCompilationDto);
+            throw new ServiceUnavailableException("Event service is temporarily unavailable, please try again later");
         }
 
         Compilation compilation = CompilationMapper.toCompilationEntity(newCompilationDto);
@@ -129,7 +132,8 @@ public class CompilationServiceImpl implements CompilationService {
                 }
                 compilation.setEventsId(newCompilationDto.getEvents());
             } catch (ClientApiException e) {
-                throw e;
+                log.info("An error occurred when trying update the compilation, event service is unavailable");
+                throw new ServiceUnavailableException("Event service is temporarily unavailable, please try again later");
             }
         }
 

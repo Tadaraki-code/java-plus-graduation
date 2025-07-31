@@ -9,9 +9,9 @@ import lombok.experimental.FieldDefaults;
 
 import static ru.yandex.practicum.core.interaction.user.constants.UserConstants.NEW_EMAIL_REGEXP;
 
-
-@Data
 @Builder
+@Getter
+@Setter
 @AllArgsConstructor
 @NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)

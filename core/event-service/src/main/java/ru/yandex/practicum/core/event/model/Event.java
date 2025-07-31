@@ -10,8 +10,9 @@ import ru.yandex.practicum.core.interaction.event.enums.EventPublishState;
 
 import java.time.LocalDateTime;
 
-@Data
 @Builder
+@Getter
+@Setter
 @AllArgsConstructor
 @NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)

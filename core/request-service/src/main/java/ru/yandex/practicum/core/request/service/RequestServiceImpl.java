@@ -11,7 +11,6 @@ import ru.yandex.practicum.core.interaction.event.dto.EventFullDto;
 import ru.yandex.practicum.core.interaction.request.dto.ParticipationRequestDto;
 import ru.yandex.practicum.core.interaction.request.enums.RequestStatus;
 import ru.yandex.practicum.core.interaction.user.dto.UserDto;
-import ru.yandex.practicum.core.interaction.util.Util;
 import ru.yandex.practicum.core.request.model.Request;
 import ru.yandex.practicum.core.request.params.RequestValidator;
 import ru.yandex.practicum.core.request.mapper.RequestMapper;
@@ -51,12 +50,7 @@ public class RequestServiceImpl implements RequestService {
         RequestValidator validator = new RequestValidator(event, userId, eventId, requestRepository);
         validator.validate();
 
-        Request newRequest = Request.builder()
-                .created(Util.getNowTruncatedToSeconds())
-                .eventId(event.getId())
-                .requesterId(requester.getId())
-                .status(status)
-                .build();
+        Request newRequest = RequestMapper.toNewRequestEntity(eventId, userId, status);
         return RequestMapper.toRequestDto(requestRepository.save(newRequest));
     }
 
@@ -100,7 +94,7 @@ public class RequestServiceImpl implements RequestService {
     @Override
     @Transactional
     public void updateRequests(List<ParticipationRequestDto> requestDto) {
-        if(requestDto == null || requestDto.isEmpty()) {
+        if (requestDto == null || requestDto.isEmpty()) {
             return;
         }
         List<Request> requests = requestDto.stream().map(RequestMapper::toRequestEntityFromDto).toList();

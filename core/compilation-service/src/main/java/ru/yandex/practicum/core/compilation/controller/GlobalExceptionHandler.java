@@ -5,6 +5,7 @@ import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.http.HttpStatus;
+import org.springframework.transaction.TransactionSystemException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -74,18 +75,18 @@ public class GlobalExceptionHandler {
                 .build();
     }
 
-//    @ExceptionHandler(TransactionSystemException.class)
-//    @ResponseStatus(HttpStatus.BAD_REQUEST)
-//    public ApiError handleTransactionSystemException(final TransactionSystemException e) {
-//        log.warn("400 {}", e.getMessage(), e);
-//
-//        return ApiError.builder()
-//                .message(e.getMessage())
-//                .reason("Constraint violation")
-//                .status(HttpStatus.BAD_REQUEST.toString())
-//                .timestamp(LocalDateTime.now())
-//                .build();
-//    }
+    @ExceptionHandler(TransactionSystemException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiError handleTransactionSystemException(final TransactionSystemException e) {
+        log.warn("400 {}", e.getMessage(), e);
+
+        return ApiError.builder()
+                .message(e.getMessage())
+                .reason("Constraint violation")
+                .status(HttpStatus.BAD_REQUEST.toString())
+                .timestamp(LocalDateTime.now())
+                .build();
+    }
 
     @ExceptionHandler(MissingServletRequestParameterException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
@@ -163,6 +164,20 @@ public class GlobalExceptionHandler {
         return ApiError.builder()
                 .message("BAD_REQUEST")
                 .reason("Incorrectly made request.")
+                .status(HttpStatus.BAD_REQUEST.toString())
+                .errors(List.of(e.getMessage()))
+                .timestamp(LocalDateTime.now())
+                .build();
+    }
+
+    @ExceptionHandler(ServiceUnavailableException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiError handleServiceUnavailableException(final ServiceUnavailableException e) {
+        log.warn("400 {}", e.getMessage(), e);
+
+        return ApiError.builder()
+                .message("BAD_REQUEST")
+                .reason(e.getMessage())
                 .status(HttpStatus.BAD_REQUEST.toString())
                 .errors(List.of(e.getMessage()))
                 .timestamp(LocalDateTime.now())

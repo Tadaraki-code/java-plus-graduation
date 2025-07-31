@@ -3,10 +3,16 @@ package ru.yandex.practicum.core.event.mapper;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.core.event.model.Event;
 import ru.yandex.practicum.core.event.parameters.MappingEventParameters;
+import ru.yandex.practicum.core.interaction.category.dto.CategoryDto;
+import ru.yandex.practicum.core.interaction.comments.dto.CommentShortDto;
 import ru.yandex.practicum.core.interaction.event.dto.*;
+import ru.yandex.practicum.core.interaction.user.dto.UserShortDto;
+
+import java.util.List;
 
 @Component
 public class EventMapper {
+
     public static Event fromNewEventDto(NewEventDto newEventDto, Long categoryId) {
         return Event.builder()
                 .title(newEventDto.getTitle())
@@ -112,6 +118,34 @@ public class EventMapper {
                 .paid(request.getPaid())
                 .title(request.getTitle())
                 .eventDate(request.getEventDate())
+                .build();
+    }
+
+    public static MappingEventParameters createMappingEventParameter(Event event, CategoryDto categoryDto,
+                                                                     UserShortDto userShortDto,
+                                                                     Long views,
+                                                                     Long  confirmedRequest) {
+        return MappingEventParameters.builder()
+                .event(event)
+                .categoryDto(categoryDto)
+                .initiator(userShortDto)
+                .confirmedRequests(confirmedRequest)
+                .views(views)
+                .build();
+    }
+
+    public static MappingEventParameters createMappingEventParameterWithComments(Event event, CategoryDto categoryDto,
+                                                                                 UserShortDto userShortDto,
+                                                                                 Long views,
+                                                                                 Long  confirmedRequest,
+                                                                                 List<CommentShortDto> comments) {
+        return MappingEventParameters.builder()
+                .event(event)
+                .categoryDto(categoryDto)
+                .initiator(userShortDto)
+                .confirmedRequests(confirmedRequest)
+                .views(views)
+                .comments(comments)
                 .build();
     }
 }
