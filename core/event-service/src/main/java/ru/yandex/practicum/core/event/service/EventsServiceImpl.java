@@ -9,7 +9,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.ewm.clients.AnalyzerClient;
 import ru.practicum.ewm.clients.CollectorClient;
-import ru.practicum.grpc.stats.event.ActionTypeProto;
 import ru.practicum.grpc.stats.event.RecommendedEventProto;
 import ru.yandex.practicum.core.event.mapper.EventMapper;
 import ru.yandex.practicum.core.event.model.Event;
@@ -37,7 +36,6 @@ import ru.yandex.practicum.core.interaction.user.dto.UserShortDto;
 import ru.yandex.practicum.core.interaction.util.Util;
 
 import java.lang.IllegalArgumentException;
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;

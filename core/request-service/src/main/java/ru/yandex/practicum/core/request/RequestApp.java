@@ -5,7 +5,10 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 import org.springframework.cloud.openfeign.EnableFeignClients;
 
-@SpringBootApplication
+@SpringBootApplication(scanBasePackages = {
+        "ru.yandex.practicum.core.request",
+        "ru.practicum.ewm"
+})
 @ConfigurationPropertiesScan
 @EnableFeignClients(basePackages = "ru.yandex.practicum.core.interaction.clients")
 public class RequestApp {
