@@ -2,11 +2,12 @@ package ru.practicum.ewm.clients;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import ru.practicum.grpc.stats.analyzer.AnalyzerControllerGrpc;
 import ru.practicum.grpc.stats.event.InteractionsCountRequestProto;
 import ru.practicum.grpc.stats.event.RecommendedEventProto;
 import ru.practicum.grpc.stats.event.SimilarEventsRequestProto;
 import ru.practicum.grpc.stats.event.UserPredictionsRequestProto;
+import stats.service.analyzer.AnalyzerControllerGrpc;
+import stats.service.dashboard.RecommendationsControllerGrpc;
 
 import java.util.Iterator;
 import java.util.List;
@@ -20,10 +21,14 @@ import java.util.stream.StreamSupport;
 public class AnalyzerClient {
 
     private final AnalyzerControllerGrpc.AnalyzerControllerBlockingStub analyzerClient;
+    private final RecommendationsControllerGrpc.RecommendationsControllerBlockingStub recommendationsClient;
 
     public AnalyzerClient(@net.devh.boot.grpc.client.inject.GrpcClient("analyzer")
-                          AnalyzerControllerGrpc.AnalyzerControllerBlockingStub analyzerClient) {
+                          AnalyzerControllerGrpc.AnalyzerControllerBlockingStub analyzerClient,
+                          @net.devh.boot.grpc.client.inject.GrpcClient("analyzer")
+                          RecommendationsControllerGrpc.RecommendationsControllerBlockingStub recommendationsClient) {
         this.analyzerClient = analyzerClient;
+        this.recommendationsClient =  recommendationsClient;
     }
 
     public Stream<RecommendedEventProto> getSimilarEvents(long eventId, long userId, int maxResults) {
@@ -53,7 +58,7 @@ public class AnalyzerClient {
         log.info("Отправлен запрос для получения суммы весов действия для событий {}", eventIds);
 
         try {
-            Iterator<RecommendedEventProto> iterator = analyzerClient.getInteractionsCount(request);
+            Iterator<RecommendedEventProto> iterator = recommendationsClient.getInteractionsCount(request);
             return asStream(iterator);
         } catch (io.grpc.StatusRuntimeException e) {
             log.error("Ошибка при вызове getInteractionsCount", e);

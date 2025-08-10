@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package stats.messages;
+package stats.message;
 
 import "google/protobuf/timestamp.proto";
 

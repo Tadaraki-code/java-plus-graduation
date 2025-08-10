@@ -6,9 +6,9 @@ import jakarta.validation.ValidationException;
 import lombok.extern.slf4j.Slf4j;
 import net.devh.boot.grpc.server.service.GrpcService;
 import org.apache.avro.specific.SpecificRecordBase;
-import ru.practicum.grpc.stats.collector.UserActionControllerGrpc;
 import ru.practicum.grpc.stats.event.UserActionProto;
 import ru.yandex.practicum.stat.collector.service.handlers.action.BaseUserActionHandler;
+import stats.service.collector.UserActionControllerGrpc;
 
 
 @Slf4j

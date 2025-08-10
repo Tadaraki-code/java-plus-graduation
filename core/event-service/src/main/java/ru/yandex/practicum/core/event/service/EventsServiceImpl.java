@@ -47,7 +47,6 @@ import java.util.stream.StreamSupport;
 @RequiredArgsConstructor
 public class EventsServiceImpl implements EventsService {
     private final EventsRepository eventsRepository;
-    private final CollectorClient collectorClient;
     private final AnalyzerClient analyzerClient;
     private final UserClient userClient;
     private final CategoryClient categoryClient;
