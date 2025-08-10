@@ -47,7 +47,7 @@ public class EventMapper {
                 .requestModeration(event.getRequestModeration())
                 .title(event.getTitle())
                 .state(event.getEventPublishState())
-                .views(eventFullDtoParams.getViews())
+                .rating(eventFullDtoParams.getRating())
                 .build();
     }
 
@@ -70,7 +70,7 @@ public class EventMapper {
                 .requestModeration(event.getRequestModeration())
                 .title(event.getTitle())
                 .state(event.getEventPublishState())
-                .views(eventFullDtoParams.getViews())
+                .rating(eventFullDtoParams.getRating())
                 .comments(eventFullDtoParams.getComments())
                 .build();
     }
@@ -87,7 +87,7 @@ public class EventMapper {
                 .initiator(eventDtoParams.getInitiator())
                 .paid(event.getPaid())
                 .title(event.getTitle())
-                .views(eventDtoParams.getViews())
+                .rating(eventDtoParams.getRating())
                 .build();
     }
 
@@ -123,20 +123,20 @@ public class EventMapper {
 
     public static MappingEventParameters createMappingEventParameter(Event event, CategoryDto categoryDto,
                                                                      UserShortDto userShortDto,
-                                                                     Long views,
+                                                                     Double rating,
                                                                      Long  confirmedRequest) {
         return MappingEventParameters.builder()
                 .event(event)
                 .categoryDto(categoryDto)
                 .initiator(userShortDto)
                 .confirmedRequests(confirmedRequest)
-                .views(views)
+                .rating(rating)
                 .build();
     }
 
     public static MappingEventParameters createMappingEventParameterWithComments(Event event, CategoryDto categoryDto,
                                                                                  UserShortDto userShortDto,
-                                                                                 Long views,
+                                                                                 Double rating,
                                                                                  Long  confirmedRequest,
                                                                                  List<CommentShortDto> comments) {
         return MappingEventParameters.builder()
@@ -144,7 +144,7 @@ public class EventMapper {
                 .categoryDto(categoryDto)
                 .initiator(userShortDto)
                 .confirmedRequests(confirmedRequest)
-                .views(views)
+                .rating(rating)
                 .comments(comments)
                 .build();
     }

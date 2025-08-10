@@ -12,6 +12,8 @@ public class EventsConstants {
     public static final String PUBLIC_API_PREFIX = "/events";
     public static final String PUBLIC_API_PREFIX_USER_ID = "/{user-id}/events";
     public static final String PUBLIC_API_PREFIX_COMMENTS = "/events/{event-id}/comments";
+    public static final String PUBLIC_API_PREFIX_RECOMMENDATION = "/recommendations";
+    public static final String PUBLIC_API_PREFIX_like = "/like";
 
     public static final String USER_ID = "user-id";
     public static final String EVENT_ID = "event-id";

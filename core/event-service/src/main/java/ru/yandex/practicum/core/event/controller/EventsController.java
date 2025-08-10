@@ -1,6 +1,5 @@
 package ru.yandex.practicum.core.event.controller;
 
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,8 +7,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-import ru.practicum.dto.StatHitDto;
-import ru.practicum.ewm.client.StatClient;
+import ru.practicum.ewm.clients.CollectorClient;
+import ru.practicum.grpc.stats.event.ActionTypeProto;
 import ru.yandex.practicum.core.event.service.EventsService;
 import ru.yandex.practicum.core.interaction.comments.dto.CommentShortDto;
 import ru.yandex.practicum.core.interaction.event.constants.EventsConstants;
@@ -17,8 +16,8 @@ import ru.yandex.practicum.core.interaction.event.dto.*;
 import ru.yandex.practicum.core.interaction.event.dto.parameters.*;
 import ru.yandex.practicum.core.interaction.event.enums.SortingEvents;
 import ru.yandex.practicum.core.interaction.request.dto.ParticipationRequestDto;
-import ru.yandex.practicum.core.interaction.util.Util;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -29,16 +28,16 @@ import static ru.yandex.practicum.core.interaction.event.constants.EventsConstan
 @Slf4j
 public class EventsController {
     private final EventsService eventsService;
-    private final StatClient statClient;
+    private final CollectorClient collectorClient;
     private final String applicationName;
 
     @Autowired
     public EventsController(EventsService eventsService,
-                            StatClient statClient,
+                            CollectorClient collectorClient,
                             @Value("${spring.application.name}")
                             String applicationName) {
         this.eventsService = eventsService;
-        this.statClient = statClient;
+        this.collectorClient = collectorClient;
         this.applicationName = applicationName;
     }
 
@@ -102,7 +101,6 @@ public class EventsController {
                                                                  @PathVariable(EVENT_ID) Long eventId,
                                                                  @RequestBody @Valid EventRequestStatusUpdateRequest updateRequest) {
         log.info("Request: update requests for event id={} for user id={}, data={}", eventId, userId, updateRequest);
-        System.out.println("запрос дошёл!");
         UpdateRequestsStatusParameters updateRequestsStatusParameters
                 = UpdateRequestsStatusParameters.builder()
                 .userId(userId)
@@ -168,8 +166,7 @@ public class EventsController {
             @RequestParam(required = false, defaultValue = "false") Boolean onlyAvailable,
             @RequestParam(required = false) SortingEvents sort,
             @RequestParam(required = false, defaultValue = "0") Integer from,
-            @RequestParam(required = false, defaultValue = "10") Integer size,
-            HttpServletRequest request) {
+            @RequestParam(required = false, defaultValue = "10") Integer size) {
         SearchPublicEventsParameters searchPublicEventsParameters = SearchPublicEventsParameters.builder()
                 .text(text)
                 .categories(categories)
@@ -182,18 +179,35 @@ public class EventsController {
                 .size(size)
                 .build();
         log.info("Request: search public events. Query={}", searchPublicEventsParameters);
-        List<EventFullDto> result = eventsService.searchPublicEvents(searchPublicEventsParameters);
-        hitStat(request);
-        return result;
+        return eventsService.searchPublicEvents(searchPublicEventsParameters);
     }
 
     @GetMapping(EventsConstants.PUBLIC_API_PREFIX + EVENT_ID_PATH)
     @ResponseStatus(HttpStatus.OK)
-    public EventFullDtoWithComments getPublicEventById(@PathVariable(EVENT_ID) Long eventId, HttpServletRequest request) {
+    public EventFullDtoWithComments getPublicEventById(@PathVariable(EVENT_ID) Long eventId,
+                                                       @RequestHeader("X-EWM-USER-ID") long userId) {
         log.info("Request: get public event with id={}", eventId);
         EventFullDtoWithComments result = eventsService.getPublicEventById(eventId);
-        hitStat(request);
+        collectorClient.sendToCollector(userId, eventId, ActionTypeProto.ACTION_VIEW, Instant.now());
         return result;
+    }
+
+    @GetMapping(EventsConstants.PUBLIC_API_PREFIX + PUBLIC_API_PREFIX_RECOMMENDATION)
+    @ResponseStatus(HttpStatus.OK)
+    public List<EventFullDto> getRecommendation(@RequestHeader("X-EWM-USER-ID") long userId,
+                                                @RequestParam(required = false, defaultValue = "5") int maxResult) {
+        log.info("Request: get recommendation for user with id={}", userId);
+        return eventsService.getRecommendation(userId, maxResult);
+    }
+
+    @PutMapping(EventsConstants.PUBLIC_API_PREFIX + EVENT_ID_PATH + PUBLIC_API_PREFIX_like)
+    @ResponseStatus(HttpStatus.OK)
+    public void likeEvent(@PathVariable(EVENT_ID) Long eventId,
+                          @RequestHeader("X-EWM-USER-ID") long userId) {
+        log.info("Request: put like for event with id={} from user with id={}", eventId, userId);
+
+        eventsService.likeEvent(eventId, userId);
+        collectorClient.sendToCollector(userId, eventId, ActionTypeProto.ACTION_LIKE, Instant.now());
     }
 
     @GetMapping(PUBLIC_API_PREFIX_COMMENTS)
@@ -239,22 +253,5 @@ public class EventsController {
     public Boolean chekEventExistingByIds(@RequestParam("eventIds") List<Long> eventIds) {
         log.info("Request: chek event by ids for feign.");
         return eventsService.chekEventExistingByIds(eventIds);
-    }
-
-
-    // endregion
-
-    private void hitStat(HttpServletRequest request) {
-        StatHitDto statHitDto = StatHitDto.builder()
-                .app(applicationName)
-                .uri(request.getRequestURI())
-                .ip(request.getRemoteAddr())
-                .timestamp(Util.getNowTruncatedToSeconds())
-                .build();
-        try {
-            statClient.hit(statHitDto);
-        } catch (Exception e) {
-            log.error("Error on hitting stats. Msg: {}, \nstackTrace: {}", e.getMessage(), e.getStackTrace());
-        }
     }
 }

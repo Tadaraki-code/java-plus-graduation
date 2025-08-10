@@ -1,0 +1,8 @@
+kafka:
+  bootstrap-servers: localhost:9092
+  topic:
+    actions: stats.user-actions.v1
+    similarity: stats.events-similarity.v1
+
+server:
+  port: 0

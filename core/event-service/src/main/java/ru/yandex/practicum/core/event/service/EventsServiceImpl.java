@@ -7,12 +7,16 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.practicum.ewm.clients.AnalyzerClient;
+import ru.practicum.ewm.clients.CollectorClient;
+import ru.practicum.grpc.stats.event.ActionTypeProto;
+import ru.practicum.grpc.stats.event.RecommendedEventProto;
 import ru.yandex.practicum.core.event.mapper.EventMapper;
 import ru.yandex.practicum.core.event.model.Event;
 import ru.yandex.practicum.core.event.model.QEvent;
 import ru.yandex.practicum.core.event.parameters.MappingEventParameters;
 import ru.yandex.practicum.core.event.storage.EventsRepository;
-import ru.yandex.practicum.core.event.views.EventsViewsGetter;
+import ru.yandex.practicum.core.event.views.EventsRatingGetter;
 import ru.yandex.practicum.core.interaction.category.dto.CategoryDto;
 import ru.yandex.practicum.core.interaction.clients.CategoryClient;
 import ru.yandex.practicum.core.interaction.clients.CommentClient;
@@ -33,22 +37,26 @@ import ru.yandex.practicum.core.interaction.user.dto.UserShortDto;
 import ru.yandex.practicum.core.interaction.util.Util;
 
 import java.lang.IllegalArgumentException;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 @Service
 @RequiredArgsConstructor
 public class EventsServiceImpl implements EventsService {
     private final EventsRepository eventsRepository;
+    private final CollectorClient collectorClient;
+    private final AnalyzerClient analyzerClient;
     private final UserClient userClient;
     private final CategoryClient categoryClient;
     private final RequestClient requestClient;
     private final CommentClient commentClient;
 
-    private final EventsViewsGetter eventsViewsGetter;
+    private final EventsRatingGetter eventsRatingGetter;
 
     @Override
     @Transactional(readOnly = true)
@@ -305,12 +313,12 @@ public class EventsServiceImpl implements EventsService {
         List<Long> resultEventIds = StreamSupport.stream(resultEvents.spliterator(), false)
                 .map(Event::getId)
                 .toList();
-        Map<Long, Long> eventsViewsMap = eventsViewsGetter.getEventsViewsMap(resultEventIds);
+        Map<Long, Double> eventsRatingMap = eventsRatingGetter.getRatingMap(resultEventIds);
         Map<Long, Long> confirmedRequestsMap = getConfirmedRequestsMap(resultEventIds);
         Comparator<Event> sorting = Comparator.comparing(Event::getEventDate);
 
         if (searchParams.getSort() == SortingEvents.VIEWS) {
-            sorting = (ev1, ev2) -> Long.compare(eventsViewsMap.get(ev2.getId()), eventsViewsMap.get(ev1.getId()));
+            sorting = (ev1, ev2) -> Double.compare(eventsRatingMap.get(ev2.getId()), eventsRatingMap.get(ev1.getId()));
         } else if (searchParams.getSort() == SortingEvents.COMMENTS) {
             Map<Long, Long> commentsMap = getCommentsNumberMap(resultEventIds);
             sorting = (ev1, ev2) -> Long.compare(commentsMap.get(ev2.getId()), commentsMap.get(ev1.getId()));
@@ -320,7 +328,7 @@ public class EventsServiceImpl implements EventsService {
                 .sorted(sorting)
                 .skip(searchParams.getFrom())
                 .limit(searchParams.getSize())
-                .map(ev -> createEventFullDto(ev, eventsViewsMap.get(ev.getId()),
+                .map(ev -> createEventFullDto(ev, eventsRatingMap.get(ev.getId()),
                         confirmedRequestsMap.getOrDefault(ev.getId(), 0L)))
                 .toList();
     }
@@ -335,6 +343,30 @@ public class EventsServiceImpl implements EventsService {
                         String.format("Event id=%d not found or is not published.", eventId))
                 );
         return createEventFullDtoWithComments(resultEvent);
+    }
+
+    @Override
+    public void likeEvent(Long eventId, Long userId) {
+        ParticipationRequestDto requestDto = requestClient.getUserRequest(userId, eventId);
+        if (requestDto == null || !"CONFIRMED".equals(requestDto.getStatus())) {
+            throw new ValidationException("You don't have a confirmed registration for this event");
+        }
+
+        Event event = getEventWithCheck(eventId);
+
+        if (!event.getEventDate().isBefore(LocalDateTime.now())) {
+            throw new ValidationException("Event has not started yet");
+        }
+    }
+
+    @Override
+    public List<EventFullDto> getRecommendation(Long userId, int maxResult) {
+        Stream<RecommendedEventProto> recommendedEvent = analyzerClient.getRecommendationsForUser(userId, maxResult);
+        List<Long> eventIds = recommendedEvent.map(RecommendedEventProto::getEventId).toList();
+
+        List<Event> events = eventsRepository.findAllById(eventIds);
+
+        return createEventFullDtoList(events);
     }
 
     @Override
@@ -516,20 +548,20 @@ public class EventsServiceImpl implements EventsService {
 
     private EventFullDto createEventFullDto(Event event) {
         long id = event.getId();
-        Map<Long, Long> eventsViewsMap = eventsViewsGetter.getEventsViewsMap(List.of(id));
+        Map<Long, Double> eventsRatingMap = eventsRatingGetter.getRatingMap(List.of(id));
         Map<Long, Long> confirmedRequestsMap = getConfirmedRequestsMap(List.of(id));
 
         MappingEventParameters eventFullDtoParams = EventMapper.createMappingEventParameter(event,
                 getCategoryWithCheck(event.getCategoryId()),
                 getUserShorDto(event.getInitiatorId()),
-                eventsViewsMap.getOrDefault(id, 0L),
+                eventsRatingMap.getOrDefault(id, 0.0),
                 confirmedRequestsMap.getOrDefault(id, 0L));
         return EventMapper.toEventFullDto(eventFullDtoParams);
     }
 
     private EventFullDtoWithComments createEventFullDtoWithComments(Event event) {
         long id = event.getId();
-        Map<Long, Long> eventsViewsMap = eventsViewsGetter.getEventsViewsMap(List.of(id));
+        Map<Long, Double> eventsRatingMap = eventsRatingGetter.getRatingMap(List.of(id));
         Map<Long, Long> confirmedRequestsMap = getConfirmedRequestsMap(List.of(id));
         List<CommentShortDto> comments;
 
@@ -542,18 +574,18 @@ public class EventsServiceImpl implements EventsService {
         MappingEventParameters eventFullDtoParams = EventMapper.createMappingEventParameterWithComments(event,
                 getCategoryWithCheck(event.getCategoryId()),
                 getUserShorDto(event.getInitiatorId()),
-                eventsViewsMap.getOrDefault(id, 0L),
+                eventsRatingMap.getOrDefault(id, 0.0),
                 confirmedRequestsMap.getOrDefault(id, 0L),
                 comments);
         return EventMapper.toEventEventFullDtoWithComments(eventFullDtoParams);
     }
 
-    private EventFullDto createEventFullDto(Event event, long views, long confirmedRequests) {
+    private EventFullDto createEventFullDto(Event event, double rating, long confirmedRequests) {
 
         MappingEventParameters eventFullDtoParams = EventMapper.createMappingEventParameter(event,
                 getCategoryWithCheck(event.getCategoryId()),
                 getUserShorDto(event.getInitiatorId()),
-                views,
+                rating,
                 confirmedRequests);
         return EventMapper.toEventFullDto(eventFullDtoParams);
     }
@@ -562,7 +594,7 @@ public class EventsServiceImpl implements EventsService {
         List<Long> ids = events.stream()
                 .map(Event::getId)
                 .toList();
-        Map<Long, Long> eventsViewsMap = eventsViewsGetter.getEventsViewsMap(ids);
+        Map<Long, Double> eventsRatingMap = eventsRatingGetter.getRatingMap(ids);
         Map<Long, Long> confirmedRequestsMap = getConfirmedRequestsMap(ids);
 
         return events.stream()
@@ -570,7 +602,7 @@ public class EventsServiceImpl implements EventsService {
                     MappingEventParameters eventFullDtoParams = EventMapper.createMappingEventParameter(event,
                             getCategoryWithCheck(event.getCategoryId()),
                             getUserShorDto(event.getInitiatorId()),
-                            eventsViewsMap.getOrDefault(event.getId(), 0L),
+                            eventsRatingMap.getOrDefault(event.getId(), 0.0),
                             confirmedRequestsMap.getOrDefault(event.getId(), 0L));
                     return EventMapper.toEventFullDto(eventFullDtoParams);
                 })
@@ -581,7 +613,7 @@ public class EventsServiceImpl implements EventsService {
         List<Long> ids = events.stream()
                 .map(Event::getId)
                 .toList();
-        Map<Long, Long> eventsViewsMap = eventsViewsGetter.getEventsViewsMap(ids);
+        Map<Long, Double> eventsRatingMap = eventsRatingGetter.getRatingMap(ids);
         Map<Long, Long> confirmedRequestsMap = getConfirmedRequestsMap(ids);
 
         return events.stream()
@@ -589,7 +621,7 @@ public class EventsServiceImpl implements EventsService {
                     MappingEventParameters mappingEventParameters = EventMapper.createMappingEventParameter(event,
                             getCategoryWithCheck(event.getCategoryId()),
                             getUserShorDto(event.getInitiatorId()),
-                            eventsViewsMap.getOrDefault(event.getId(), 0L),
+                            eventsRatingMap.getOrDefault(event.getId(), 0.0),
                             confirmedRequestsMap.getOrDefault(event.getId(), 0L));
                     return EventMapper.toEventShortDto(mappingEventParameters);
                 })
