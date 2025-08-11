@@ -19,8 +19,18 @@ spring:
     password: "service"
     url: "jdbc:postgresql://localhost:6543/event_service"
 
-stat-service:
-  stat-server-id: "stats-server"
+grpc:
+  client:
+    analyzer:
+      address: 'discovery:///analyzer' # адрес gRPC-сервиса
+      enableKeepAlive: true
+      keepAliveWithoutCalls: true
+      negotiationType: plaintext
+    collector:
+      address: 'discovery:///collector' # адрес gRPC-сервиса
+      enableKeepAlive: true
+      keepAliveWithoutCalls: true
+      negotiationType: plaintext
 
 management:
   endpoints:

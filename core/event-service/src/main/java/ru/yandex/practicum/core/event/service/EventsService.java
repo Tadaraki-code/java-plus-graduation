@@ -37,4 +37,9 @@ public interface EventsService {
     Boolean chekEventExistingByIds(List<Long> eventIds);
 
     EventFullDto getEventById(Long eventId);
+
+    void likeEvent(Long eventId, Long userId);
+
+    List<EventFullDto> getRecommendation(Long userId, int maxResult);
+
 }

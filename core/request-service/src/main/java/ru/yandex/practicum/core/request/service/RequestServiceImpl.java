@@ -3,6 +3,8 @@ package ru.yandex.practicum.core.request.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.practicum.ewm.clients.CollectorClient;
+import ru.practicum.grpc.stats.event.ActionTypeProto;
 import ru.yandex.practicum.core.interaction.clients.EventClient;
 import ru.yandex.practicum.core.interaction.clients.UserClient;
 import ru.yandex.practicum.core.interaction.error.exception.ClientApiException;
@@ -16,6 +18,7 @@ import ru.yandex.practicum.core.request.params.RequestValidator;
 import ru.yandex.practicum.core.request.mapper.RequestMapper;
 import ru.yandex.practicum.core.request.repository.RequestRepository;
 
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,6 +28,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class RequestServiceImpl implements RequestService {
     private final RequestRepository requestRepository;
+    private final CollectorClient collectorClient;
     private final UserClient userClient;
     private final EventClient eventClient;
 
@@ -50,6 +54,7 @@ public class RequestServiceImpl implements RequestService {
         RequestValidator validator = new RequestValidator(event, userId, eventId, requestRepository);
         validator.validate();
 
+        collectorClient.sendToCollector(userId, eventId, ActionTypeProto.ACTION_REGISTER, Instant.now());
         Request newRequest = RequestMapper.toNewRequestEntity(eventId, userId, status);
         return RequestMapper.toRequestDto(requestRepository.save(newRequest));
     }
@@ -139,6 +144,5 @@ public class RequestServiceImpl implements RequestService {
             throw new NotFoundException(String.format("User not found with id %d", userId));
         }
     }
-
 
 }

@@ -7,7 +7,7 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
 
 @SpringBootApplication(scanBasePackages = {
         "ru.yandex.practicum.core.event",
-        "ru.practicum.ewm.client"
+        "ru.practicum.ewm"
 })
 @ConfigurationPropertiesScan
 @EnableFeignClients(basePackages = "ru.yandex.practicum.core.interaction.clients")
